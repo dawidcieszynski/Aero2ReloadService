@@ -8,9 +8,9 @@
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        public static void Main()
+        public static void Main(string[] args)
         {
-            ServiceBase[] servicesToRun = { new Aero2ReloadService() };
+            ServiceBase[] servicesToRun = { new Aero2ReloadService(args) };
 #if RELEASE
             ServiceBase.Run(servicesToRun);
 #elif DEBUG

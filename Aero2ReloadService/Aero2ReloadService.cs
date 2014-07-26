@@ -20,15 +20,34 @@
 
         private bool checking;
 
-        public Aero2ReloadService()
+        public Aero2ReloadService(string[] args)
         {
             this.InitializeComponent();
-
-            this.InitializeEventLog();
 
             this.InitializeTimer();
 
             this.InitializeRestSharp();
+
+            string eventSourceName = Consts.EventSource;
+            string logName = Consts.EventLog;
+            if (args.Any())
+            {
+                eventSourceName = args[0];
+            }
+
+            if (args.Count() > 1)
+            {
+                logName = args[1];
+            }
+
+            this.eventLog = new System.Diagnostics.EventLog();
+            if (!System.Diagnostics.EventLog.SourceExists(eventSourceName))
+            {
+                System.Diagnostics.EventLog.CreateEventSource(eventSourceName, logName);
+            }
+
+            this.eventLog.Source = eventSourceName;
+            this.eventLog.Log = logName;
         }
 
         public void Check()
@@ -83,9 +102,7 @@
 
         private void LogEvent(string logEntry)
         {
-#if EVENTLOG
             this.eventLog.WriteEntry(logEntry);
-#endif
         }
 
         private void InitializeTimer()
@@ -97,20 +114,6 @@
         private void OnTimer(object sender, EventArgs eventArgs)
         {
             this.Check();
-        }
-
-        private void InitializeEventLog()
-        {
-#if EVENTLOG
-            this.eventLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists(Consts.EventSource))
-            {
-                System.Diagnostics.EventLog.CreateEventSource(Consts.EventSource, Consts.EventLog);
-            }
-
-            this.eventLog.Source = Consts.EventSource;
-            this.eventLog.Log = Consts.EventLog;
-#endif
         }
 
         private void RestartConnection()

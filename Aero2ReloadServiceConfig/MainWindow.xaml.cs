@@ -18,10 +18,12 @@
         private void InstallButtonClick(object sender, RoutedEventArgs e)
         {
             this.serviceInstaller.InstallService();
+            this.serviceInstaller.StartService(0);
         }
 
         private void UninstallButtonClick(object sender, RoutedEventArgs e)
         {
+            this.serviceInstaller.StopService(0);
             this.serviceInstaller.UnInstallService();
         }
     }
