@@ -59,6 +59,7 @@
     <Compile Include="Aero2ReloadService.Designer.cs">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
     </Compile>
+    <Compile Include="Aero2ReloadServiceInstaller.cs" />
     <Compile Include="CaptchaForm.cs">
       <SubType>Form</SubType>
     </Compile>
