@@ -11,10 +11,10 @@
         public static void Main(string[] args)
         {
             ServiceBase[] servicesToRun = { new Aero2ReloadService(args) };
-#if RELEASE
-            ServiceBase.Run(servicesToRun);
-#elif DEBUG
+#if DEBUG
             ((Aero2ReloadService)servicesToRun.First()).Check();
+#else
+            ServiceBase.Run(servicesToRun);
 #endif
         }
     }
