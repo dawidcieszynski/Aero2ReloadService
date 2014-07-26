@@ -32,8 +32,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\packages\HtmlAgilityPack.1.4.6\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="RestSharp">
+      <HintPath>..\packages\RestSharp.104.4.0\lib\net4\RestSharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -49,18 +57,33 @@
     <Compile Include="Aero2ReloadService.Designer.cs">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
     </Compile>
+    <Compile Include="CaptchaForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CaptchaForm.Designer.cs">
+      <DependentUpon>CaptchaForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Consts.cs" />
+    <Compile Include="Generated\NetworkAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomDevices\HuaweiE355.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Aero2ReloadService.resx">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="CaptchaForm.resx">
+      <DependentUpon>CaptchaForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
