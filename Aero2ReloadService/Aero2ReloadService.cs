@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
     using System.Management;
+    using System.Runtime.InteropServices;
     using System.ServiceProcess;
     using System.Windows.Forms;
 
@@ -85,15 +86,34 @@
         {
             this.LogEvent("OnStart");
 
+            ServiceStatus serviceStatus = new ServiceStatus();
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_START_PENDING;
+            serviceStatus.dwWaitHint = 100000;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+
             this.timer.Start();
+
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
         protected override void OnStop()
         {
+            ServiceStatus serviceStatus = new ServiceStatus();
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_STOP_PENDING;
+            serviceStatus.dwWaitHint = 100000;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+
             this.LogEvent("OnStop");
 
             this.timer.Stop();
+
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
 
         private void InitializeRestSharp()
         {
