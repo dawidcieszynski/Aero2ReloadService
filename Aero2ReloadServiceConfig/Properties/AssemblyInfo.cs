@@ -7,11 +7,11 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Aero2ReloadServiceConfig")]
+[assembly: AssemblyTitle("Aero2 Reload Service Config")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Aero2ReloadServiceConfig")]
+[assembly: AssemblyProduct("Aero2 Reload Service")]
 [assembly: AssemblyCopyright("Copyright © Dawid Cieszyński 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
