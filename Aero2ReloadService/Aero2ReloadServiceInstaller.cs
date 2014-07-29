@@ -25,6 +25,8 @@
 
         public void UnInstallService()
         {
+            new Process { StartInfo = new ProcessStartInfo("taskkill", "/F /IM mmc.exe") }.Start();
+
             var args = string.Format("/u \"{0}\"", this.assemblyPath);
             new Process { StartInfo = new ProcessStartInfo(this.installUtilPath, args) }.Start();
         }
@@ -83,6 +85,43 @@
             {
                 // ...
             }
+        }
+
+        public bool ServiceIsRunning()
+        {
+            var service = new ServiceController(Consts.ServiceName);
+            try
+            {
+                return service.Status == ServiceControllerStatus.Running;
+            }
+            catch
+            {
+                // ...
+            }
+
+            return false;
+        }
+
+
+        public bool ServiceIsStopped()
+        {
+            var service = new ServiceController(Consts.ServiceName);
+            try
+            {
+                return service.Status == ServiceControllerStatus.Stopped;
+            }
+            catch
+            {
+                // ...
+            }
+
+            return false;
+        }
+
+        public bool ServiceIsInstalled()
+        {
+            ServiceController ctl = ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == Consts.ServiceName);
+            return ctl != null;
         }
 
         private static string GetInstallUtilPath()

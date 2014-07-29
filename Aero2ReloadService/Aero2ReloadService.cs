@@ -54,6 +54,8 @@
 
         public void Check()
         {
+            this.LogEvent("Check");
+
             if (this.checking)
             {
                 return;
@@ -63,7 +65,7 @@
             {
                 this.checking = true;
 
-                this.LogEvent("OnTimer");
+                this.LogEvent("Checking");
 
                 if (!this.InternetValid())
                 {
@@ -132,11 +134,13 @@
         private void InitializeTimer()
         {
             this.timer.Interval = 60000;
-            this.timer.Tick += this.OnTimer;
+            this.timer.Tick += this.OnTimerTick;
         }
 
-        private void OnTimer(object sender, EventArgs eventArgs)
+        private void OnTimerTick(object sender, EventArgs eventArgs)
         {
+            this.LogEvent("OnTimerTick");
+
             this.Check();
         }
 
