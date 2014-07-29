@@ -8,6 +8,7 @@
     using System.Windows.Forms;
 
     using global::Aero2ReloadService.CustomDevices;
+    using global::Aero2ReloadService.Exceptions;
 
     using RestSharp;
 
@@ -66,12 +67,15 @@
 
                 if (!this.InternetValid())
                 {
-                    bool captchaResolved;
-                    do
+                    if (!this.NeedRestartConnection())
                     {
-                        captchaResolved = this.ProcessCaptcha();
+                        bool captchaResolved;
+                        do
+                        {
+                            captchaResolved = this.ProcessCaptcha();
+                        }
+                        while (!captchaResolved);
                     }
-                    while (!captchaResolved);
 
                     this.RestartConnection();
                 }
@@ -169,6 +173,15 @@
             }
         }
 
+        private bool NeedRestartConnection()
+        {
+            var aeroFormRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
+            aeroFormRequest.AddParameter("viewForm", "true");
+
+            var aeroFormResponse = this.restClient.Execute(aeroFormRequest);
+            return aeroFormResponse.Content.Contains("Rozłącz i ponownie połącz się z Internetem.");
+        }
+
         private int RestartIntegratedDevices()
         {
             var query = new SelectQuery("Win32_NetworkAdapter", "NetConnectionStatus=2");
@@ -180,8 +193,18 @@
                 var adapter = new NetworkAdapter(result);
                 if (adapter.AdapterTypeId == NetworkAdapter.AdapterTypeIdValues.Wireless)
                 {
-                    adapter.Disable();
-                    adapter.Enable();
+                    var disableResult = adapter.Disable();
+                    if (disableResult != 0)
+                    {
+                        throw new DeviceDisableException();
+                    }
+
+                    var enableResult = adapter.Enable();
+                    if (enableResult != 0)
+                    {
+                        throw new DeviceDisableException();
+                    }
+
                     count++;
                 }
             }

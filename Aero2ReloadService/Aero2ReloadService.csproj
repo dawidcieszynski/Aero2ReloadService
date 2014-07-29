@@ -60,6 +60,7 @@
     <Compile Include="Aero2ReloadService.Designer.cs">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
     </Compile>
+    <Compile Include="Exceptions\Aero2ReloadServiceException.cs" />
     <Compile Include="Aero2ReloadServiceInstaller.cs" />
     <Compile Include="CaptchaForm.cs">
       <SubType>Form</SubType>
@@ -68,6 +69,7 @@
       <DependentUpon>CaptchaForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Consts.cs" />
+    <Compile Include="Exceptions\DeviceDisableException.cs" />
     <Compile Include="Generated\NetworkAdapter.cs">
       <SubType>Component</SubType>
     </Compile>

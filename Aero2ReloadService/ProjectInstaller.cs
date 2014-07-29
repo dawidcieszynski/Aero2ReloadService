@@ -13,7 +13,7 @@
 
         protected override void OnBeforeInstall(IDictionary savedState)
         {
-            const string Parameter = Consts.EventSource + "1\" \"" + Consts.EventLog + "1";
+            const string Parameter = Consts.EventSource + "\" \"" + Consts.EventLog;
             Context.Parameters["assemblypath"] = "\"" + Context.Parameters["assemblypath"] + "\" \"" + Parameter + "\"";
             base.OnBeforeInstall(savedState);
         }
