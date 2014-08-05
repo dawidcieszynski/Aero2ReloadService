@@ -1,11 +1,16 @@
-namespace Aero2ReloadServiceConfig.ViewModel
+namespace Aero2Reload.Config.ViewModel
 {
+    using System;
+    using System.Collections.ObjectModel;
+    using System.ComponentModel;
     using System.Diagnostics;
-    using System.Text;
+    using System.Threading;
+
+    using Aero2Reload.Service;
 
     using Aero2ReloadService;
 
-    using Aero2ReloadServiceConfig.Helpers;
+    using AeroReload.Common;
 
     using GalaSoft.MvvmLight;
     using GalaSoft.MvvmLight.Command;
@@ -14,9 +19,13 @@ namespace Aero2ReloadServiceConfig.ViewModel
     {
         private readonly Aero2ReloadServiceInstaller serviceInstaller;
 
-        private EventLog eventLog;
+        private readonly EventLog eventLog;
 
-        private string eventLogText;
+        private readonly BackgroundWorker logEventWorker;
+
+        private int logEntriesIndex;
+
+        private DateTime? lastTimeGenerated;
 
         public MainViewModel()
         {
@@ -27,25 +36,46 @@ namespace Aero2ReloadServiceConfig.ViewModel
             this.StartServiceCommand = new RelayCommand(this.StartService, this.CanStartService);
             this.StopServiceCommand = new RelayCommand(this.StopService, this.CanStopService);
 
-            string eventSourceName = Consts.EventSource;
-            string logName = Consts.EventLog;
-            this.eventLog = new System.Diagnostics.EventLog();
-            if (!EventLog.SourceExists(eventSourceName))
+            this.eventLog = new EventLog();
+            if (!EventLog.SourceExists(Consts.EventSourceName))
             {
-                EventLog.CreateEventSource(eventSourceName, logName);
+                EventLog.CreateEventSource(Consts.EventSourceName, Consts.EventLog);
             }
 
-            this.eventLog.Source = eventSourceName;
-            this.eventLog.Log = logName;
+            this.eventLog.Source = Consts.EventSourceName;
+            this.eventLog.Log = Consts.EventLog;
 
-            var s = new StringBuilder();
-            foreach (EventLogEntry entry in this.eventLog.Entries)
-            {
-                s.Append(entry.Format());
-            }
+            this.LogEntries = new ObservableCollection<LogEntry>();
+            this.logEventWorker = new BackgroundWorker { WorkerReportsProgress = true };
+            this.logEventWorker.DoWork += delegate
+                {
+                    Thread.Sleep(1000);
 
-            this.EventLogText = s.ToString();
-            this.eventLog.EntryWritten += this.EventLogEntryWritten;
+                    foreach (EventLogEntry entry in this.eventLog.Entries)
+                    {
+                        if (this.lastTimeGenerated != null && entry.TimeGenerated <= this.lastTimeGenerated)
+                        {
+                            continue;
+                        }
+
+                        this.logEventWorker.ReportProgress(
+                            this.logEntriesIndex,
+                            new LogEntry
+                                {
+                                    Index = this.logEntriesIndex++,
+                                    DateTime = entry.TimeGenerated,
+                                    Message = entry.Message,
+                                });
+                        this.lastTimeGenerated = entry.TimeGenerated;
+                    }
+                };
+
+            this.logEventWorker.ProgressChanged += (x, z) => this.LogEntries.Insert(0, z.UserState as LogEntry);
+            this.logEventWorker.RunWorkerCompleted += delegate
+                {
+                    this.logEventWorker.RunWorkerAsync();
+                };
+            this.logEventWorker.RunWorkerAsync();
         }
 
         public RelayCommand InstallServiceCommand { get; private set; }
@@ -56,29 +86,7 @@ namespace Aero2ReloadServiceConfig.ViewModel
 
         public RelayCommand StopServiceCommand { get; private set; }
 
-        public string EventLogText
-        {
-            get
-            {
-                return this.eventLogText;
-            }
-
-            set
-            {
-                if (this.eventLogText == value)
-                {
-                    return;
-                }
-
-                this.eventLogText = value;
-                this.RaisePropertyChanged(this.EventLogText);
-            }
-        }
-
-        private void EventLogEntryWritten(object sender, EntryWrittenEventArgs e)
-        {
-            this.EventLogText += e.Entry.Format();
-        }
+        public ObservableCollection<LogEntry> LogEntries { get; set; }
 
         private bool CanStopService()
         {

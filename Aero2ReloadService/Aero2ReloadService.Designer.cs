@@ -1,4 +1,4 @@
-﻿namespace Aero2ReloadService
+﻿namespace Aero2Reload.Service
 {
     partial class Aero2ReloadService
     {
@@ -13,9 +13,9 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing && (this.components != null))
             {
-                components.Dispose();
+                this.components.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -28,21 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.timer = new System.Windows.Forms.Timer(this.components);
-            this.eventLog = new System.Diagnostics.EventLog();
-            ((System.ComponentModel.ISupportInitialize)(this.eventLog)).BeginInit();
             // 
             // Aero2ReloadService
             // 
             this.ServiceName = "Aero2ReloadService";
-            ((System.ComponentModel.ISupportInitialize)(this.eventLog)).EndInit();
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Timer timer;
-        private System.Diagnostics.EventLog eventLog;
     }
 }

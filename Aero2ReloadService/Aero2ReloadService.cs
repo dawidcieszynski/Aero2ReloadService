@@ -1,36 +1,28 @@
-﻿namespace Aero2ReloadService
+﻿namespace Aero2Reload.Service
 {
     using System;
+    using System.Deployment.Application;
     using System.Linq;
-    using System.Management;
     using System.Runtime.InteropServices;
     using System.ServiceProcess;
-    using System.Windows.Forms;
 
-    using global::Aero2ReloadService.CustomDevices;
-    using global::Aero2ReloadService.Exceptions;
+    using Aero2Reload.Service.Logic;
 
-    using RestSharp;
+    using global::Aero2ReloadService.Loggers;
 
-    using ROOT.CIMV2.Win32;
-
-    using HtmlDocument = HtmlAgilityPack.HtmlDocument;
+    using AeroReload.Common;
 
     public partial class Aero2ReloadService : ServiceBase
     {
-        private RestClient restClient;
+        private readonly InternetLogic internetLogic;
 
-        private bool checking;
+        private readonly EventLogLogger logger;
 
         public Aero2ReloadService(string[] args)
         {
             this.InitializeComponent();
 
-            this.InitializeTimer();
-
-            this.InitializeRestSharp();
-
-            string eventSourceName = Consts.EventSource;
+            string eventSourceName = Consts.EventSourceName;
             string logName = Consts.EventLog;
             if (args.Any())
             {
@@ -42,227 +34,63 @@
                 logName = args[1];
             }
 
-            this.eventLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists(eventSourceName))
-            {
-                System.Diagnostics.EventLog.CreateEventSource(eventSourceName, logName);
-            }
+            this.logger = new EventLogLogger(eventSourceName, logName);
 
-            this.eventLog.Source = eventSourceName;
-            this.eventLog.Log = logName;
-        }
-
-        public void Check()
-        {
-            this.LogEvent("Check");
-
-            if (this.checking)
-            {
-                return;
-            }
-
-            try
-            {
-                this.checking = true;
-
-                this.LogEvent("Checking");
-
-                if (!this.InternetValid())
-                {
-                    if (!this.NeedRestartConnection())
-                    {
-                        bool captchaResolved;
-                        do
-                        {
-                            captchaResolved = this.ProcessCaptcha();
-                        }
-                        while (!captchaResolved);
-                    }
-
-                    this.RestartConnection();
-                }
-            }
-            finally
-            {
-                this.checking = false;
-            }
+            this.internetLogic = new InternetLogic(this.logger);
         }
 
         protected override void OnStart(string[] args)
         {
-            this.LogEvent("OnStart");
+            this.logger.Debug("OnStart");
 
-            ServiceStatus serviceStatus = new ServiceStatus();
-            serviceStatus.dwCurrentState = ServiceState.SERVICE_START_PENDING;
-            serviceStatus.dwWaitHint = 100000;
-            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+            if (ApplicationDeployment.IsNetworkDeployed)
+            {
+                this.logger.Debug(ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString());
+            }
 
-            this.timer.Start();
+            this.SetServiceStatusStartPending();
 
-            serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
-            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+            this.internetLogic.Start();
+
+            this.SetServiceStatusRunning();
         }
 
         protected override void OnStop()
         {
-            ServiceStatus serviceStatus = new ServiceStatus();
-            serviceStatus.dwCurrentState = ServiceState.SERVICE_STOP_PENDING;
-            serviceStatus.dwWaitHint = 100000;
-            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+            this.logger.Debug("OnStop");
 
-            this.LogEvent("OnStop");
+            this.SetServiceStatusStopPending();
 
-            this.timer.Stop();
+            this.internetLogic.Stop();
 
-            serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
-            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+            this.SetServiceStatusStopped();
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
 
-        private void InitializeRestSharp()
+        private void SetServiceStatusRunning()
         {
-            this.restClient = new RestClient();
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_RUNNING, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void LogEvent(string logEntry)
+        private void SetServiceStatusStartPending()
         {
-            this.eventLog.WriteEntry(logEntry);
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_START_PENDING, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void InitializeTimer()
+        private void SetServiceStatusStopped()
         {
-            this.timer.Interval = 60000;
-            this.timer.Tick += this.OnTimerTick;
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_STOPPED, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void OnTimerTick(object sender, EventArgs eventArgs)
+        private void SetServiceStatusStopPending()
         {
-            this.LogEvent("OnTimerTick");
-
-            this.Check();
-        }
-
-        private void RestartConnection()
-        {
-            // restart kart WWAN wbudowanych
-            var devicesCount = this.RestartIntegratedDevices();
-
-            if (devicesCount == 1)
-            {
-                // ok
-                return;
-            }
-
-            if (devicesCount > 1)
-            {
-                // za dużo ale na razie ok
-                return;
-            }
-
-            // restart innych kart zewnętrznych
-            devicesCount = new HuaweiE355(this.eventLog).Restart();
-
-            if (devicesCount == 1)
-            {
-                // ok
-                return;
-            }
-
-            if (devicesCount > 1)
-            {
-                // za dużo ale na razie ok
-                return;
-            }
-        }
-
-        private bool NeedRestartConnection()
-        {
-            var aeroFormRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
-            aeroFormRequest.AddParameter("viewForm", "true");
-
-            var aeroFormResponse = this.restClient.Execute(aeroFormRequest);
-            return aeroFormResponse.Content.Contains("Rozłącz i ponownie połącz się z Internetem.");
-        }
-
-        private int RestartIntegratedDevices()
-        {
-            var query = new SelectQuery("Win32_NetworkAdapter", "NetConnectionStatus=2");
-            var search = new ManagementObjectSearcher(query);
-            int count = 0;
-            foreach (var managementBaseObject in search.Get())
-            {
-                var result = (ManagementObject)managementBaseObject;
-                var adapter = new NetworkAdapter(result);
-                if (adapter.AdapterTypeId == NetworkAdapter.AdapterTypeIdValues.Wireless)
-                {
-                    var disableResult = adapter.Disable();
-                    if (disableResult != 0)
-                    {
-                        throw new DeviceDisableException();
-                    }
-
-                    var enableResult = adapter.Enable();
-                    if (enableResult != 0)
-                    {
-                        throw new DeviceDisableException();
-                    }
-
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        private bool ProcessCaptcha()
-        {
-            var aeroFormRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
-            aeroFormRequest.AddParameter("viewForm", "true");
-
-            var aeroFormResponse = this.restClient.Execute(aeroFormRequest);
-            var fordoc = new HtmlDocument();
-            fordoc.LoadHtml(aeroFormResponse.Content);
-
-            var captchaImg = fordoc.DocumentNode.SelectSingleNode(".//*[@id='captcha']");
-            string captchaImgUrl = Consts.AeroRootUrl + captchaImg.Attributes["src"].Value;
-
-            string resolvedCaptchaValue;
-            var dialogResult = this.ShowCaptchaFormDialogResult(captchaImgUrl, out resolvedCaptchaValue);
-            if (dialogResult == DialogResult.OK)
-            {
-                var sendresolvedCaptchaRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
-                foreach (var d in fordoc.DocumentNode.SelectNodes(".//input").Where(d => d.Attributes.Contains("name") && d.Attributes.Contains("value")))
-                {
-                    string name = d.Attributes["name"].Value;
-                    string value = d.Attributes["value"].Value;
-
-                    sendresolvedCaptchaRequest.AddParameter(name, value);
-                }
-
-                sendresolvedCaptchaRequest.AddParameter("captcha", resolvedCaptchaValue);
-                var result = this.restClient.Execute(sendresolvedCaptchaRequest);
-
-                return result.Content.Contains("Odpowiedź prawidłowa");
-            }
-
-            return false;
-        }
-
-        private DialogResult ShowCaptchaFormDialogResult(string captchaImgUrl, out string resolvedCaptchaValue)
-        {
-            var captchaForm = new CaptchaForm();
-            captchaForm.LoadImage(captchaImgUrl);
-            var dialogResult = captchaForm.ShowDialog();
-            resolvedCaptchaValue = captchaForm.GetValue();
-            return dialogResult;
-        }
-
-        private bool InternetValid()
-        {
-            var internetCheckResponse = this.restClient.Execute(new RestRequest(Consts.HomeUrl));
-            return !internetCheckResponse.Content.Contains("Kliknij tutaj");
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_STOP_PENDING, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
     }
 }

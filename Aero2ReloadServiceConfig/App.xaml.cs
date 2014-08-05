@@ -1,4 +1,4 @@
-﻿namespace Aero2ReloadServiceConfig
+﻿namespace Aero2Reload.Config
 {
     using System;
     using System.Diagnostics;
@@ -6,9 +6,6 @@
     using System.Security.Principal;
     using System.Windows;
 
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
         protected override void OnStartup(StartupEventArgs e)

@@ -1,4 +1,4 @@
-﻿namespace Aero2ReloadService
+﻿namespace Aero2Reload.Service
 {
     public enum ServiceState
     {

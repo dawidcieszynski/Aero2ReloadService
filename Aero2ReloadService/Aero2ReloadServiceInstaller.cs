@@ -1,10 +1,13 @@
-﻿namespace Aero2ReloadService
+﻿namespace Aero2Reload.Service
 {
     using System;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.ServiceProcess;
+    using System.Windows.Forms;
+
+    using AeroReload.Common;
 
     public class Aero2ReloadServiceInstaller
     {
@@ -25,10 +28,15 @@
 
         public void UnInstallService()
         {
-            new Process { StartInfo = new ProcessStartInfo("taskkill", "/F /IM mmc.exe") }.Start();
+            var tk = new Process { StartInfo = new ProcessStartInfo("taskkill", "/F /IM mmc.exe") };
+            tk.Start();
+            tk.WaitForExit();
 
             var args = string.Format("/u \"{0}\"", this.assemblyPath);
-            new Process { StartInfo = new ProcessStartInfo(this.installUtilPath, args) }.Start();
+            var iu = new Process { StartInfo = new ProcessStartInfo(this.installUtilPath, args) };
+            iu.Start();
+
+            Application.Exit();
         }
 
         public void StartService(int timeoutMilliseconds)

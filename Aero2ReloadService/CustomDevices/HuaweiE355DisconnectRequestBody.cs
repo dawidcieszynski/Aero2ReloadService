@@ -1,4 +1,4 @@
-namespace Aero2ReloadService.CustomDevices.HuaweiE355Requests
+namespace Aero2Reload.Service.CustomDevices
 {
     using RestSharp.Serializers;
 

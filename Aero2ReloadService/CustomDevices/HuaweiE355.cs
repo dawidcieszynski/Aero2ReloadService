@@ -1,19 +1,20 @@
-namespace Aero2ReloadService.CustomDevices
+namespace Aero2Reload.Service.CustomDevices
 {
     using System;
-    using System.Diagnostics;
     using System.Net;
     using System.Threading;
 
-    using global::Aero2ReloadService.CustomDevices.HuaweiE355Requests;
+    using Aero2Reload.Service.Loggers;
+
+    using global::Aero2ReloadService.Loggers;
 
     using RestSharp;
 
     public class HuaweiE355
     {
-        private readonly EventLog eventLog;
+        private readonly Logger eventLog;
 
-        public HuaweiE355(EventLog eventLog)
+        public HuaweiE355(Logger eventLog)
         {
             this.eventLog = eventLog;
         }
@@ -32,7 +33,7 @@ namespace Aero2ReloadService.CustomDevices
             var loginResponse = restClient.Execute(new HuaweiE355LoginRequest());
             if (!loginResponse.Content.Contains("<response>OK</response>"))
             {
-                this.eventLog.WriteEntry("B³¹d logowania do HuaweiE355 (admin, admin)", EventLogEntryType.Error);
+                this.eventLog.Error("B³¹d logowania do HuaweiE355 (admin, admin)");
                 return 0;
             }
 
@@ -49,7 +50,7 @@ namespace Aero2ReloadService.CustomDevices
                 var disconnectResponse = restClient.Execute(new HuaweiE355DisconnectRequest());
                 if (!disconnectResponse.Content.Contains("<response>OK</response>"))
                 {
-                    this.eventLog.WriteEntry("B³¹d roz³¹czania HuaweiE355", EventLogEntryType.Error);
+                    this.eventLog.Error("B³¹d roz³¹czania HuaweiE355");
                     return 0;
                 }
 
@@ -69,7 +70,7 @@ namespace Aero2ReloadService.CustomDevices
                 var connectResponse = restClient.Execute(new HuaweiE355ConnectRequest());
                 if (!connectResponse.Content.Contains("<response>OK</response>"))
                 {
-                    this.eventLog.WriteEntry("B³¹d ³¹czenia HuaweiE355", EventLogEntryType.Error);
+                    this.eventLog.Error("B³¹d ³¹czenia HuaweiE355");
                     return 0;
                 }
 

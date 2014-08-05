@@ -1,8 +1,7 @@
-﻿namespace Aero2ReloadService.Tests
+﻿namespace Aero2Reload.Tests
 {
-    using System.Diagnostics;
-
-    using global::Aero2ReloadService.CustomDevices;
+    using Aero2Reload.Service.CustomDevices;
+    using Aero2Reload.Service.Loggers;
 
     using Xunit;
 
@@ -11,7 +10,7 @@
         [Fact]
         public void TestRestartHuaweiE355()
         {
-            var o = new HuaweiE355(new EventLog());
+            var o = new HuaweiE355(new ConsoleLogger());
             o.Restart();
         }
     }

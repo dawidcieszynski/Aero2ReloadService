@@ -1,4 +1,4 @@
-﻿namespace Aero2ReloadService.Exceptions
+﻿namespace Aero2Reload.Service.Exceptions
 {
     using System;
 

@@ -1,4 +1,4 @@
-﻿namespace Aero2ReloadService.CustomDevices
+﻿namespace Aero2Reload.Service.CustomDevices
 {
     public enum HuaweiE355ConnectionStatus
     {

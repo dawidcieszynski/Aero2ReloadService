@@ -5,15 +5,16 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{B1EBB9E7-DFDC-4FB7-86E3-61C0405E1F84}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Aero2ReloadService</RootNamespace>
-    <AssemblyName>Aero2ReloadService</AssemblyName>
+    <RootNamespace>Aero2Reload.Service</RootNamespace>
+    <AssemblyName>Aero2Reload.Service</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -26,7 +27,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -52,6 +52,21 @@
   <PropertyGroup>
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>4B6C9E94C278DD100EF3398A3AC23F6A735865C3</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestTimestampUrl>http://timestamp.verisign.com/scripts/timstamp.dll</ManifestTimestampUrl>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="HtmlAgilityPack, Version=1.6.0.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.6.0\lib\Net45\HtmlAgilityPack.dll</HintPath>
@@ -62,6 +77,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
     <Reference Include="System.Web" />
@@ -80,6 +96,9 @@
     <Compile Include="Aero2ReloadService.Designer.cs">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
     </Compile>
+    <Compile Include="ApplicationLoader.cs" />
+    <Compile Include="Loggers\EventLogLogger.cs" />
+    <Compile Include="Loggers\ConsoleLogger.cs" />
     <Compile Include="CustomDevices\HuaweiE355ConnectionStatus.cs" />
     <Compile Include="CustomDevices\HuaweiE355ConnectRequestBody.cs" />
     <Compile Include="CustomDevices\HuaweiE355StatusRequest.cs" />
@@ -92,18 +111,14 @@
     <Compile Include="CustomDevices\HuaweiE355StatusResponseBody.cs" />
     <Compile Include="Exceptions\Aero2ReloadServiceException.cs" />
     <Compile Include="Aero2ReloadServiceInstaller.cs" />
-    <Compile Include="CaptchaForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="CaptchaForm.Designer.cs">
-      <DependentUpon>CaptchaForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Consts.cs" />
     <Compile Include="Exceptions\DeviceDisableException.cs" />
     <Compile Include="Generated\NetworkAdapter.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="CustomDevices\HuaweiE355.cs" />
+    <Compile Include="Loggers\Logger.cs" />
+    <Compile Include="Logic\CaptchaDialogLogic.cs" />
+    <Compile Include="Logic\InternetLogic.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
@@ -114,6 +129,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceState.cs" />
     <Compile Include="ServiceStatus.cs" />
+    <Compile Include="TransmissionServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -122,9 +138,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Aero2ReloadService.resx">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="CaptchaForm.resx">
-      <DependentUpon>CaptchaForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ProjectInstaller.resx">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
@@ -147,6 +160,16 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aero2ReloadCaptchaDialog\Aero2Reload.CaptchaDialog.csproj">
+      <Project>{CEC11216-4A8A-4630-A240-FFF8B117E67D}</Project>
+      <Name>Aero2Reload.CaptchaDialog</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AeroReload.Common\AeroReload.Common.csproj">
+      <Project>{0A5EBECF-4BA3-4ED8-AE20-7AC174CF2A23}</Project>
+      <Name>AeroReload.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -155,6 +178,9 @@
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>rem "C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe" sign /p gentooCM01 /v /f "D:\Dokumenty\Certyfikaty\Certum\DawidCieszyński20141204.pfx" -t "http://timestamp.verisign.com/scripts/timstamp.dll" "$(TargetPath)"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
