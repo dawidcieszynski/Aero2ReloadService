@@ -6,7 +6,9 @@
     using System.IO.Pipes;
     using System.Windows.Forms;
 
-    public partial class CaptchaForm : Form
+    using AeroReload.Common;
+
+    public sealed partial class CaptchaForm : Form
     {
         private readonly NamedPipeClientStream pipeClient;
 
@@ -15,7 +17,10 @@
         public CaptchaForm(string arg0, NamedPipeClientStream pipeClient)
         {
             this.pipeClient = pipeClient;
+
             this.InitializeComponent();
+
+            this.Text = Consts.CaptchaFormTitle;
 
             this.Load += this.CaptchaFormLoad;
 

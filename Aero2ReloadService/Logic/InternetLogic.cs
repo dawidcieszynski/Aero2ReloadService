@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
     using System.Management;
+    using System.Net.NetworkInformation;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -24,13 +25,11 @@
 
         private readonly RestClient restClient;
 
-        private bool checking;
+        private readonly CaptchaDialogLogic captchaDialogLogic;
 
         private Timer timer;
 
         private TransmissionServer server;
-
-        private CaptchaDialogLogic captchaDialogLogic;
 
         public InternetLogic(Logger logger)
         {
@@ -55,19 +54,30 @@
             this.logger.Debug("Logic started");
         }
 
-        public async void Check()
+        public void NetworkDevicesChanged(NetworkAvailabilityEventArgs networkAvailabilityEventArgs)
         {
-            this.logger.Debug("Check");
-
-            if (this.checking)
-            {
-                return;
-            }
+            this.logger.Debug("NetworkDevicesChanged");
 
             try
             {
-                this.checking = true;
+                this.Check();
+            }
+            catch (Exception exception)
+            {
+                this.logger.DebugException(exception);
+            }
+            finally
+            {
+                this.logger.Debug("NetworkDevicesChangedEnd");
+            }
+        }
 
+        private async void Check()
+        {
+            this.logger.Debug("Check");
+
+            try
+            {
                 this.logger.Debug("Checking");
 
                 if (!this.InternetValid())
@@ -88,10 +98,6 @@
             catch (Exception exception)
             {
                 this.logger.Debug("Check " + exception.Message);
-            }
-            finally
-            {
-                this.checking = false;
             }
         }
 

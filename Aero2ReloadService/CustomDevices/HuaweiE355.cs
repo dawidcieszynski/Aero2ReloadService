@@ -6,8 +6,6 @@ namespace Aero2Reload.Service.CustomDevices
 
     using Aero2Reload.Service.Loggers;
 
-    using global::Aero2ReloadService.Loggers;
-
     using RestSharp;
 
     public class HuaweiE355

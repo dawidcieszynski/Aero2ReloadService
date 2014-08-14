@@ -50,7 +50,7 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock
-                    Text="{Binding DateTime}"
+                    Text="{Binding DateTime, StringFormat=yyyy-MM-dd HH:mm:ss}"
                     Grid.Column="0"
                     FontWeight="Bold"
                     Margin="5,0,5,0" />

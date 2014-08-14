@@ -1,9 +1,7 @@
-﻿namespace Aero2ReloadService.Loggers
+﻿namespace Aero2Reload.Service.Loggers
 {
     using System;
     using System.Diagnostics;
-
-    using Aero2Reload.Service.Loggers;
 
     public class EventLogLogger : Logger
     {

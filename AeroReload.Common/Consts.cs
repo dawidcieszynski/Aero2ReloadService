@@ -13,5 +13,9 @@
         public const string ServiceName = "Aero2ReloadService";
 
         public const string ServicePipeName = ServiceName + "Pipe";
+
+        public const string CaptchaFormTitle = "Aero2 Captcha";
+
+        public const string BugSenseId = "w8ca9330";
     }
 }

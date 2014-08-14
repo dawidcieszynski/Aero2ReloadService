@@ -6,10 +6,6 @@ namespace Aero2Reload.Config.ViewModel
     using System.Diagnostics;
     using System.Threading;
 
-    using Aero2Reload.Service;
-
-    using Aero2ReloadService;
-
     using AeroReload.Common;
 
     using GalaSoft.MvvmLight;

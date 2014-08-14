@@ -6,11 +6,14 @@
     using System.Runtime.InteropServices;
     using System.ServiceProcess;
 
+    using Aero2Reload.Service.Loggers;
     using Aero2Reload.Service.Logic;
 
-    using global::Aero2ReloadService.Loggers;
-
     using AeroReload.Common;
+
+    using BugSense;
+    using BugSense.Core;
+    using BugSense.Model;
 
     public partial class Aero2ReloadService : ServiceBase
     {
@@ -21,6 +24,12 @@
         public Aero2ReloadService(string[] args)
         {
             this.InitializeComponent();
+
+            if (!BugSenseHandlerBase.IsInitialized)
+            {
+                var exceptionManager = new ExceptionManager();
+                BugSenseHandler.Instance.InitAndStartSession(exceptionManager, Consts.BugSenseId);
+            }
 
             string eventSourceName = Consts.EventSourceName;
             string logName = Consts.EventLog;
@@ -52,6 +61,8 @@
 
             this.internetLogic.Start();
 
+            System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += this.NetworkChangeNetworkAvailabilityChanged;
+
             this.SetServiceStatusRunning();
         }
 
@@ -61,6 +72,8 @@
 
             this.SetServiceStatusStopPending();
 
+            System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged -= this.NetworkChangeNetworkAvailabilityChanged;
+
             this.internetLogic.Stop();
 
             this.SetServiceStatusStopped();
@@ -68,6 +81,11 @@
 
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
+
+        private void NetworkChangeNetworkAvailabilityChanged(object sender, System.Net.NetworkInformation.NetworkAvailabilityEventArgs e)
+        {
+            this.internetLogic.NetworkDevicesChanged(e);
+        }
 
         private void SetServiceStatusRunning()
         {
