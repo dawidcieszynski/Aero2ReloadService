@@ -26,6 +26,13 @@
                 return;
             }
 
+            var captchaAssemblyName = typeof(CaptchaForm).Assembly.GetName();
+            Process[] pname = Process.GetProcessesByName(captchaAssemblyName.Name);
+            if (pname.Length > 0)
+            {
+                return;
+            }
+
             string assemblyPath = System.Reflection.Assembly.GetAssembly(typeof(CaptchaForm)).Location;
             ApplicationLoader.PROCESS_INFORMATION procInfo;
             var result = ApplicationLoader.StartProcessAndBypassUAC(assemblyPath + " " + captchaImgUrl, out procInfo);
