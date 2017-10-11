@@ -3,9 +3,22 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aero2ReloadService", "Aero2ReloadService\Aero2ReloadService.csproj", "{B1EBB9E7-DFDC-4FB7-86E3-61C0405E1F84}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aero2Reload.Service", "Aero2ReloadService\Aero2Reload.Service.csproj", "{B1EBB9E7-DFDC-4FB7-86E3-61C0405E1F84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aero2ReloadServiceConfig", "Aero2ReloadServiceConfig\Aero2ReloadServiceConfig.csproj", "{7C7FC8F6-BEC7-410B-B0B4-5992393904C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aero2Reload.Config", "Aero2ReloadServiceConfig\Aero2Reload.Config.csproj", "{7C7FC8F6-BEC7-410B-B0B4-5992393904C4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{59CBB4B8-D176-4B26-9E1F-34C5F2D55C9B}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aero2Reload.Tests", "Aero2ReloadService.Tests\Aero2Reload.Tests.csproj", "{6D5BC9E9-65D7-4DBD-9935-7B6DC3DB975B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aero2Reload.CaptchaDialog", "Aero2ReloadCaptchaDialog\Aero2Reload.CaptchaDialog.csproj", "{CEC11216-4A8A-4630-A240-FFF8B117E67D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeroReload.Common", "AeroReload.Common\AeroReload.Common.csproj", "{0A5EBECF-4BA3-4ED8-AE20-7AC174CF2A23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +34,18 @@ Global
 		{7C7FC8F6-BEC7-410B-B0B4-5992393904C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C7FC8F6-BEC7-410B-B0B4-5992393904C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C7FC8F6-BEC7-410B-B0B4-5992393904C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D5BC9E9-65D7-4DBD-9935-7B6DC3DB975B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D5BC9E9-65D7-4DBD-9935-7B6DC3DB975B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D5BC9E9-65D7-4DBD-9935-7B6DC3DB975B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D5BC9E9-65D7-4DBD-9935-7B6DC3DB975B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEC11216-4A8A-4630-A240-FFF8B117E67D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEC11216-4A8A-4630-A240-FFF8B117E67D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEC11216-4A8A-4630-A240-FFF8B117E67D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEC11216-4A8A-4630-A240-FFF8B117E67D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A5EBECF-4BA3-4ED8-AE20-7AC174CF2A23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A5EBECF-4BA3-4ED8-AE20-7AC174CF2A23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A5EBECF-4BA3-4ED8-AE20-7AC174CF2A23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A5EBECF-4BA3-4ED8-AE20-7AC174CF2A23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

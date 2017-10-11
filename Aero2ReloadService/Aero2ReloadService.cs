@@ -1,218 +1,114 @@
-﻿namespace Aero2ReloadService
+﻿namespace Aero2Reload.Service
 {
     using System;
+    using System.Deployment.Application;
     using System.Linq;
-    using System.Management;
+    using System.Runtime.InteropServices;
     using System.ServiceProcess;
-    using System.Windows.Forms;
 
-    using global::Aero2ReloadService.CustomDevices;
+    using Aero2Reload.Service.Loggers;
+    using Aero2Reload.Service.Logic;
 
-    using RestSharp;
+    using AeroReload.Common;
 
-    using ROOT.CIMV2.Win32;
-
-    using HtmlDocument = HtmlAgilityPack.HtmlDocument;
+    using BugSense;
+    using BugSense.Core;
+    using BugSense.Model;
 
     public partial class Aero2ReloadService : ServiceBase
     {
-        private RestClient restClient;
+        private readonly InternetLogic internetLogic;
 
-        private bool checking;
+        private readonly EventLogLogger logger;
 
-        public Aero2ReloadService()
+        public Aero2ReloadService(string[] args)
         {
             this.InitializeComponent();
 
-            this.InitializeEventLog();
-
-            this.InitializeTimer();
-
-            this.InitializeRestSharp();
-        }
-
-        public void Check()
-        {
-            if (this.checking)
+            if (!BugSenseHandlerBase.IsInitialized)
             {
-                return;
+                var exceptionManager = new ExceptionManager();
+                BugSenseHandler.Instance.InitAndStartSession(exceptionManager, Consts.BugSenseId);
             }
 
-            try
+            string eventSourceName = Consts.EventSourceName;
+            string logName = Consts.EventLog;
+            if (args.Any())
             {
-                this.checking = true;
-
-                this.LogEvent("OnTimer");
-
-                if (!this.InternetValid())
-                {
-                    bool captchaResolved;
-                    do
-                    {
-                        captchaResolved = this.ProcessCaptcha();
-                    }
-                    while (!captchaResolved);
-
-                    this.RestartConnection();
-                }
+                eventSourceName = args[0];
             }
-            finally
+
+            if (args.Count() > 1)
             {
-                this.checking = false;
+                logName = args[1];
             }
+
+            this.logger = new EventLogLogger(eventSourceName, logName);
+
+            this.internetLogic = new InternetLogic(this.logger);
         }
 
         protected override void OnStart(string[] args)
         {
-            this.LogEvent("OnStart");
+            this.logger.Debug("OnStart");
 
-            this.timer.Start();
+            if (ApplicationDeployment.IsNetworkDeployed)
+            {
+                this.logger.Debug(ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString());
+            }
+
+            this.SetServiceStatusStartPending();
+
+            this.internetLogic.Start();
+
+            System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += this.NetworkChangeNetworkAvailabilityChanged;
+
+            this.SetServiceStatusRunning();
         }
 
         protected override void OnStop()
         {
-            this.LogEvent("OnStop");
+            this.logger.Debug("OnStop");
 
-            this.timer.Stop();
+            this.SetServiceStatusStopPending();
+
+            System.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged -= this.NetworkChangeNetworkAvailabilityChanged;
+
+            this.internetLogic.Stop();
+
+            this.SetServiceStatusStopped();
         }
 
-        private void InitializeRestSharp()
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
+
+        private void NetworkChangeNetworkAvailabilityChanged(object sender, System.Net.NetworkInformation.NetworkAvailabilityEventArgs e)
         {
-            this.restClient = new RestClient();
+            this.internetLogic.NetworkDevicesChanged(e);
         }
 
-        private void LogEvent(string logEntry)
+        private void SetServiceStatusRunning()
         {
-#if EVENTLOG
-            this.eventLog.WriteEntry(logEntry);
-#endif
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_RUNNING, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void InitializeTimer()
+        private void SetServiceStatusStartPending()
         {
-            this.timer.Interval = 60000;
-            this.timer.Tick += this.OnTimer;
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_START_PENDING, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void OnTimer(object sender, EventArgs eventArgs)
+        private void SetServiceStatusStopped()
         {
-            this.Check();
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_STOPPED, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void InitializeEventLog()
+        private void SetServiceStatusStopPending()
         {
-#if EVENTLOG
-            this.eventLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists(Consts.EventSource))
-            {
-                System.Diagnostics.EventLog.CreateEventSource(Consts.EventSource, Consts.EventLog);
-            }
-
-            this.eventLog.Source = Consts.EventSource;
-            this.eventLog.Log = Consts.EventLog;
-#endif
-        }
-
-        private void RestartConnection()
-        {
-            // restart kart WWAN wbudowanych
-            var devicesCount = this.RestartIntegratedDevices();
-
-            if (devicesCount == 1)
-            {
-                // ok
-                return;
-            }
-
-            if (devicesCount > 1)
-            {
-                // za dużo ale na razie ok
-                return;
-            }
-
-            // restart innych kart zewnętrznych
-            devicesCount = new HuaweiE355().Restart();
-
-            if (devicesCount == 1)
-            {
-                // ok
-                return;
-            }
-
-            if (devicesCount > 1)
-            {
-                // za dużo ale na razie ok
-                return;
-            }
-        }
-
-        private int RestartIntegratedDevices()
-        {
-            var query = new SelectQuery("Win32_NetworkAdapter", "NetConnectionStatus=2");
-            var search = new ManagementObjectSearcher(query);
-            int count = 0;
-            foreach (var managementBaseObject in search.Get())
-            {
-                var result = (ManagementObject)managementBaseObject;
-                var adapter = new NetworkAdapter(result);
-                if (adapter.AdapterTypeId == NetworkAdapter.AdapterTypeIdValues.Wireless)
-                {
-                    adapter.Disable();
-                    adapter.Enable();
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        private bool ProcessCaptcha()
-        {
-            var aeroFormRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
-            aeroFormRequest.AddParameter("viewForm", "true");
-
-            var aeroFormResponse = this.restClient.Execute(aeroFormRequest);
-            var fordoc = new HtmlDocument();
-            fordoc.LoadHtml(aeroFormResponse.Content);
-
-            var captchaImg = fordoc.DocumentNode.SelectSingleNode(".//*[@id='captcha']");
-            string captchaImgUrl = Consts.AeroRootUrl + captchaImg.Attributes["src"].Value;
-
-            string resolvedCaptchaValue;
-            var dialogResult = this.ShowCaptchaFormDialogResult(captchaImgUrl, out resolvedCaptchaValue);
-            if (dialogResult == DialogResult.OK)
-            {
-                var sendresolvedCaptchaRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
-                foreach (var d in fordoc.DocumentNode.SelectNodes(".//input").Where(d => d.Attributes.Contains("name") && d.Attributes.Contains("value")))
-                {
-                    string name = d.Attributes["name"].Value;
-                    string value = d.Attributes["value"].Value;
-
-                    sendresolvedCaptchaRequest.AddParameter(name, value);
-                }
-
-                sendresolvedCaptchaRequest.AddParameter("captcha", resolvedCaptchaValue);
-                var result = this.restClient.Execute(sendresolvedCaptchaRequest);
-
-                return result.Content.Contains("Odpowiedź prawidłowa");
-            }
-
-            return false;
-        }
-
-        private DialogResult ShowCaptchaFormDialogResult(string captchaImgUrl, out string resolvedCaptchaValue)
-        {
-            var captchaForm = new CaptchaForm();
-            captchaForm.LoadImage(captchaImgUrl);
-            var dialogResult = captchaForm.ShowDialog();
-            resolvedCaptchaValue = captchaForm.GetValue();
-            return dialogResult;
-        }
-
-        private bool InternetValid()
-        {
-            var internetCheckResponse = this.restClient.Execute(new RestRequest(Consts.HomeUrl));
-            return !internetCheckResponse.Content.Contains("Kliknij tutaj");
+            var serviceStatus = new ServiceStatus { dwCurrentState = ServiceState.SERVICE_STOP_PENDING, dwWaitHint = 100000 };
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
     }
 }
