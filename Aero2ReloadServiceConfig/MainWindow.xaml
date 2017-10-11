@@ -3,6 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Button Grid.Column="0" Content="Zainstaluj usługę" Click="InstallButtonClick" />
+        <Button Grid.Column="1" Content="Odinstaluj usługę" Click="UninstallButtonClick"/>
     </Grid>
 </Window>

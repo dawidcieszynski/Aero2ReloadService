@@ -9,5 +9,7 @@
         public const string AeroRootUrl = "http://bdi.free.aero2.net.pl:8080/";
 
         public const string HomeUrl = "http://go.microsoft.com/fwlink/?LinkID=219472&clcid=0x409";
+
+        public const string ServiceName = "Aero2ReloadService";
     }
 }

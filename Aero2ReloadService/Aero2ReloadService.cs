@@ -3,10 +3,12 @@
     using System;
     using System.Linq;
     using System.Management;
+    using System.Runtime.InteropServices;
     using System.ServiceProcess;
     using System.Windows.Forms;
 
     using global::Aero2ReloadService.CustomDevices;
+    using global::Aero2ReloadService.Exceptions;
 
     using RestSharp;
 
@@ -20,15 +22,34 @@
 
         private bool checking;
 
-        public Aero2ReloadService()
+        public Aero2ReloadService(string[] args)
         {
             this.InitializeComponent();
-
-            this.InitializeEventLog();
 
             this.InitializeTimer();
 
             this.InitializeRestSharp();
+
+            string eventSourceName = Consts.EventSource;
+            string logName = Consts.EventLog;
+            if (args.Any())
+            {
+                eventSourceName = args[0];
+            }
+
+            if (args.Count() > 1)
+            {
+                logName = args[1];
+            }
+
+            this.eventLog = new System.Diagnostics.EventLog();
+            if (!System.Diagnostics.EventLog.SourceExists(eventSourceName))
+            {
+                System.Diagnostics.EventLog.CreateEventSource(eventSourceName, logName);
+            }
+
+            this.eventLog.Source = eventSourceName;
+            this.eventLog.Log = logName;
         }
 
         public void Check()
@@ -46,12 +67,15 @@
 
                 if (!this.InternetValid())
                 {
-                    bool captchaResolved;
-                    do
+                    if (!this.NeedRestartConnection())
                     {
-                        captchaResolved = this.ProcessCaptcha();
+                        bool captchaResolved;
+                        do
+                        {
+                            captchaResolved = this.ProcessCaptcha();
+                        }
+                        while (!captchaResolved);
                     }
-                    while (!captchaResolved);
 
                     this.RestartConnection();
                 }
@@ -66,15 +90,34 @@
         {
             this.LogEvent("OnStart");
 
+            ServiceStatus serviceStatus = new ServiceStatus();
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_START_PENDING;
+            serviceStatus.dwWaitHint = 100000;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+
             this.timer.Start();
+
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
         protected override void OnStop()
         {
+            ServiceStatus serviceStatus = new ServiceStatus();
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_STOP_PENDING;
+            serviceStatus.dwWaitHint = 100000;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+
             this.LogEvent("OnStop");
 
             this.timer.Stop();
+
+            serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
+            SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
 
         private void InitializeRestSharp()
         {
@@ -83,9 +126,7 @@
 
         private void LogEvent(string logEntry)
         {
-#if EVENTLOG
             this.eventLog.WriteEntry(logEntry);
-#endif
         }
 
         private void InitializeTimer()
@@ -97,20 +138,6 @@
         private void OnTimer(object sender, EventArgs eventArgs)
         {
             this.Check();
-        }
-
-        private void InitializeEventLog()
-        {
-#if EVENTLOG
-            this.eventLog = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists(Consts.EventSource))
-            {
-                System.Diagnostics.EventLog.CreateEventSource(Consts.EventSource, Consts.EventLog);
-            }
-
-            this.eventLog.Source = Consts.EventSource;
-            this.eventLog.Log = Consts.EventLog;
-#endif
         }
 
         private void RestartConnection()
@@ -146,6 +173,15 @@
             }
         }
 
+        private bool NeedRestartConnection()
+        {
+            var aeroFormRequest = new RestRequest(Consts.AeroRootUrl, Method.POST);
+            aeroFormRequest.AddParameter("viewForm", "true");
+
+            var aeroFormResponse = this.restClient.Execute(aeroFormRequest);
+            return aeroFormResponse.Content.Contains("Rozłącz i ponownie połącz się z Internetem.");
+        }
+
         private int RestartIntegratedDevices()
         {
             var query = new SelectQuery("Win32_NetworkAdapter", "NetConnectionStatus=2");
@@ -157,8 +193,18 @@
                 var adapter = new NetworkAdapter(result);
                 if (adapter.AdapterTypeId == NetworkAdapter.AdapterTypeIdValues.Wireless)
                 {
-                    adapter.Disable();
-                    adapter.Enable();
+                    var disableResult = adapter.Disable();
+                    if (disableResult != 0)
+                    {
+                        throw new DeviceDisableException();
+                    }
+
+                    var enableResult = adapter.Enable();
+                    if (enableResult != 0)
+                    {
+                        throw new DeviceDisableException();
+                    }
+
                     count++;
                 }
             }
