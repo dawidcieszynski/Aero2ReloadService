@@ -162,7 +162,7 @@
             }
 
             // restart innych kart zewnętrznych
-            devicesCount = new HuaweiE355().Restart();
+            devicesCount = new HuaweiE355(this.eventLog).Restart();
 
             if (devicesCount == 1)
             {

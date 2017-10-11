@@ -64,6 +64,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -79,6 +80,16 @@
     <Compile Include="Aero2ReloadService.Designer.cs">
       <DependentUpon>Aero2ReloadService.cs</DependentUpon>
     </Compile>
+    <Compile Include="CustomDevices\HuaweiE355ConnectionStatus.cs" />
+    <Compile Include="CustomDevices\HuaweiE355ConnectRequestBody.cs" />
+    <Compile Include="CustomDevices\HuaweiE355StatusRequest.cs" />
+    <Compile Include="CustomDevices\HuaweiE355ConnectRequest.cs" />
+    <Compile Include="CustomDevices\HuaweiE355DisconnectRequest.cs" />
+    <Compile Include="CustomDevices\HuaweiE355HomeRequest.cs" />
+    <Compile Include="CustomDevices\HuaweiE355LoginRequestBody.cs" />
+    <Compile Include="CustomDevices\HuaweiE355DisconnectRequestBody.cs" />
+    <Compile Include="CustomDevices\HuaweiE355LoginRequest.cs" />
+    <Compile Include="CustomDevices\HuaweiE355StatusResponseBody.cs" />
     <Compile Include="Exceptions\Aero2ReloadServiceException.cs" />
     <Compile Include="Aero2ReloadServiceInstaller.cs" />
     <Compile Include="CaptchaForm.cs">
